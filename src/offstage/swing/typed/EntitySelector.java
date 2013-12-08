@@ -1,0 +1,335 @@
+/*
+OffstageArts: Enterprise Database for Arts Organizations
+This file Copyright (c) 2005-2008 by Robert Fischer
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+/*
+ * SimpleSearchPanel.java
+ *
+ * Created on June 5, 2005, 5:47 PM
+ */
+
+package offstage.swing.typed;
+import citibob.sql.*;
+import citibob.task.*;
+import offstage.db.*;
+import java.awt.event.*;
+import citibob.types.KeyedModel;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import javax.swing.JPanel;
+import offstage.FrontApp;
+import offstage.equery.EQuery;
+import offstage.equery.swing.EQueryWizard;
+import offstage.swing.typed.IdSqlTable.PopupListener;
+
+/**
+ *
+ * @author  citibob
+ */
+public class EntitySelector extends citibob.swing.typed.JTypedPanel {
+	
+// searchResultsTable is the main "sub widget", whose value change events get reported in JTypedPanel
+FrontApp app;
+int termid;					// If >=0, only select persons registered for this term.
+boolean inDropDown;			// True if this widget is being used in a dropdown
+
+private boolean autoSelectOnOne = false;		// If true, auto-select if we get only one element in our search results
+
+
+/** Creates new form SimpleSearchPanel */
+public EntitySelector() {
+	initComponents();	
+}
+
+public void setDropDown(boolean dropDown)
+{ inDropDown = dropDown; }
+
+/** Property change in the "main" widget (search panel) is the result of a user
+ action (we know this to be the case, in this case).  Therefore, it must get
+ its own DB transaction. */
+public void propertyChange(final java.beans.PropertyChangeEvent evt)
+{
+	app.sqlRun().pushFlush();
+	EntitySelector.super.propertyChange(evt);
+	app.sqlRun().popFlush();
+}	
+
+
+public void initRuntime(FrontApp xapp) //Statement st, FullEntityDbModel dm)
+{
+	initRuntime(xapp, -1, null, null);
+}
+
+
+public void initRuntime(FrontApp xapp, int termid)
+{
+	initRuntime(xapp, termid, null, null);
+}
+
+public void initRuntime(FrontApp xapp, int termid,
+String[] popupItems, PopupListener listener)
+{
+	this.termid = termid;
+	this.app = xapp;
+	searchResultsTable.initRuntime(app);
+	super.setSubWidget(searchResultsTable);
+
+	// Set up DBID dropdown
+	KeyedModel km = app.schemaSet().getKeyedModel("entities", "dbid");
+	cbDbid.setKeyedModel(km);
+	cbDbid.setValue(0);		// Default database
+	
+	// Pressing ENTER will initiate search.
+	searchWord.addKeyListener(new KeyAdapter() {
+	public void keyTyped(KeyEvent e) {
+		//System.out.println(e.getKeyChar());
+		if (e.getKeyChar() == '\n') {
+			app.guiRun().run(EntitySelector.this, new SqlTask() {
+			public void run(SqlRun str) throws Exception {
+				runSearch(str);
+			}});
+		}
+	}});
+
+	if (popupItems != null && listener != null)
+		searchResultsTable.addPopupMenu(popupItems, listener);
+
+searchResultsTable.setRowSelectionAllowed(false);
+System.out.println("Row selection allowed = " +
+		searchResultsTable.getRowSelectionAllowed());
+
+}
+
+public void setSearchIdSql(SqlRun str, String idSql)
+{
+	searchResultsTable.executeQuery(str, idSql, null);
+	str.execUpdate(new UpdTasklet2() {
+	public void run(SqlRun str) throws Exception {
+		if (searchResultsTable.getModel().getRowCount() == 1 && isAutoSelectOnOne()) {
+			searchResultsTable.setRowSelectionInterval(0,0);	// Auto-select the one item; Should fire an event...
+		}
+	}});	
+}
+
+public void setSearch(SqlRun str, String text)//, int dbid)
+//throws SQLException
+{
+	Integer dbid = (Integer)cbDbid.getValue();
+	String idSql = (termid >= 0 ? DB.registeredSearchSql(text, dbid, termid) : DB.simpleSearchSql(text, dbid));
+	setSearchIdSql(str, idSql);
+}
+
+void runSearch(SqlRun str) { //throws Exception {
+//	app.guiRun().run(this, new BatchRunnable() {
+//	public void run(SqlRun str) throws Exception {
+	String text = searchWord.getText();
+	setSearch(app.sqlRun(), text);
+//	app.getBatchSet().runBatches();
+//	}});
+}
+
+
+///** Allows others to add a double-click-to-select mouse listener. */
+//public JTypedSelectTable getSearchTable()
+//	{ return searchResultsTable; }
+// ----------------------------------------------------------------------
+
+/** Used when this widget is in a popup; put the focus immediately on the search field. */
+public void requestTextFocus()
+{
+	searchWord.setText("");
+	searchWord.requestFocus();
+}
+
+/** This method is called from within the constructor to
+	 * initialize the form.
+	 * WARNING: Do NOT modify this code. The content of this method is
+	 * always regenerated by the Form Editor.
+	 */
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+    private void initComponents() {
+        java.awt.GridBagConstraints gridBagConstraints;
+
+        jPanel1 = new javax.swing.JPanel();
+        searchWord = new javax.swing.JTextField();
+        bSearch = new javax.swing.JButton();
+        cbDbid = new citibob.swing.typed.JKeyedComboBox();
+        jPanel2 = new javax.swing.JPanel();
+        bAdvanced2 = new javax.swing.JButton();
+        bExportEmails2 = new javax.swing.JButton();
+        FamilyScrollPanel = new javax.swing.JScrollPane();
+        searchResultsTable = new offstage.swing.typed.IdSqlTable();
+
+        setLayout(new java.awt.BorderLayout());
+
+        jPanel1.setLayout(new java.awt.GridBagLayout());
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 1;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        gridBagConstraints.weightx = 1.0;
+        jPanel1.add(searchWord, gridBagConstraints);
+
+        bSearch.setText("Search");
+        bSearch.setPreferredSize(new java.awt.Dimension(84, 25));
+        bSearch.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bSearchActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 1;
+        gridBagConstraints.gridy = 1;
+        jPanel1.add(bSearch, gridBagConstraints);
+
+        cbDbid.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 0;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        jPanel1.add(cbDbid, gridBagConstraints);
+
+        jPanel2.setLayout(new java.awt.GridBagLayout());
+
+        bAdvanced2.setText("Advanced");
+        bAdvanced2.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        bAdvanced2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bAdvanced2ActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        jPanel2.add(bAdvanced2, gridBagConstraints);
+
+        bExportEmails2.setText("*emails*");
+        bExportEmails2.setMargin(new java.awt.Insets(2, 2, 2, 2));
+        bExportEmails2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                bExportEmails2ActionPerformed(evt);
+            }
+        });
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.insets = new java.awt.Insets(0, 2, 0, 2);
+        jPanel2.add(bExportEmails2, gridBagConstraints);
+
+        gridBagConstraints = new java.awt.GridBagConstraints();
+        gridBagConstraints.gridx = 0;
+        gridBagConstraints.gridy = 3;
+        gridBagConstraints.gridwidth = 2;
+        gridBagConstraints.fill = java.awt.GridBagConstraints.BOTH;
+        jPanel1.add(jPanel2, gridBagConstraints);
+
+        add(jPanel1, java.awt.BorderLayout.SOUTH);
+
+        FamilyScrollPanel.setPreferredSize(new java.awt.Dimension(300, 64));
+
+        searchResultsTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null},
+                {null, null, null, null}
+            },
+            new String [] {
+                "Title 1", "Title 2", "Title 3", "Title 4"
+            }
+        ));
+        FamilyScrollPanel.setViewportView(searchResultsTable);
+
+        add(FamilyScrollPanel, java.awt.BorderLayout.CENTER);
+    }// </editor-fold>//GEN-END:initComponents
+
+	
+	private void bSearchActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bSearchActionPerformed
+		app.guiRun().run(EntitySelector.this, new SqlTask() {
+		public void run(SqlRun str) throws Exception {
+			runSearch(str);
+//			app.getBatchSet().runBatches();
+		}});
+	}//GEN-LAST:event_bSearchActionPerformed
+
+	private void bAdvanced2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bAdvanced2ActionPerformed
+		app.guiRun().run(EntitySelector.this, new SqlTask() {
+		public void run(SqlRun str) throws Exception {
+			EQueryWizard wizard = new EQueryWizard(app, EntitySelector.this);
+			if (!wizard.runAdvancedSearch(str)) return;
+			EQuery equery = (EQuery)wizard.getVal("equery");
+			setSearchIdSql(str, equery.getSql(app.equerySchema()));
+		}});
+
+		// TODO add your handling code here:
+}//GEN-LAST:event_bAdvanced2ActionPerformed
+
+	private void bExportEmails2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bExportEmails2ActionPerformed
+		app.guiRun().run(EntitySelector.this, new SqlTask() {
+		public void run(SqlRun str) throws Exception {
+//			JPanel p;
+			Toolkit toolkit = java.awt.Toolkit.getDefaultToolkit();
+			Clipboard cb = toolkit.getSystemClipboard();
+
+			IdSqlTableModel model = searchResultsTable.getIdSqlTableModel();
+			String emails = model.getEmailList();
+
+			StringSelection sel = new StringSelection(emails);
+			cb.setContents(sel, sel);
+		}});
+		// TODO add your handling code here:
+}//GEN-LAST:event_bExportEmails2ActionPerformed
+	
+	
+    // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JScrollPane FamilyScrollPanel;
+    private javax.swing.JButton bAdvanced2;
+    private javax.swing.JButton bExportEmails2;
+    private javax.swing.JButton bSearch;
+    private citibob.swing.typed.JKeyedComboBox cbDbid;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private offstage.swing.typed.IdSqlTable searchResultsTable;
+    private javax.swing.JTextField searchWord;
+    // End of variables declaration//GEN-END:variables
+// ===========================================================
+
+	
+//public static void main(String[] args) throws Exception
+//{	
+//	citibob.sql.ConnPool pool = offstage.db.DB.newConnPool();
+//	Statement st = pool.checkout().createStatement();
+//	FrontApp fapp = new FrontApp(pool,null);
+//	
+//	javax.swing.JFrame frame = new javax.swing.JFrame();
+//	EntitySelector panel = new EntitySelector();
+//	panel.initRuntime(fapp);
+//	frame.getContentPane().add(panel);
+//	frame.pack();
+//	frame.setVisible(true);
+//}
+
+	public boolean isAutoSelectOnOne()
+	{
+		return autoSelectOnOne;
+	}
+
+	public void setAutoSelectOnOne(boolean autoSelectOnOne)
+	{
+		this.autoSelectOnOne = autoSelectOnOne;
+	}
+
+	
+}

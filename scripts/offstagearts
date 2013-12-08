@@ -1,0 +1,31 @@
+#!/usr/bin/env python
+#
+
+import os.path
+import subprocess
+
+scriptdir = os.path.dirname(__file__)
+print scriptdir
+
+# Construct a classpath array
+aclasspath = []
+for root, dirs, files in os.walk(os.path.join(scriptdir, 'jars')) :
+	for f in files :
+		aclasspath.append(os.path.join(root, f))
+
+# Turn it into a classpath
+classpath = ':'.join(aclasspath)
+
+# Find the launcher jar file
+print os.listdir(scriptdir)
+for file in os.listdir(scriptdir) :
+	if file.endswith('.jar') :
+		launcher = os.path.join(scriptdir, file)
+		break
+
+# Construct the command
+cmd = ['java', '-cp', classpath, 'offstage.launch.Custom', launcher]
+
+print cmd
+subprocess.call(cmd)
+
