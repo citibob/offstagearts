@@ -45,7 +45,7 @@ import offstage.accounts.gui.AccountsDB;
 import offstage.school.gui.SchoolDB;
 
 /**
- *
+ * @deprecated
  * @author citibob
  */
 public class AcctStatement

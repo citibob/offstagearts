@@ -32,6 +32,7 @@ jar_dirs = [ \
 
 for dir in jar_dirs :
 	for f in os.listdir(dir) :
+		if os.path.isdir(os.path.join(dir,f)) : continue
 		shutil.copyfile(os.path.join(dir, f), os.path.join(deploy_lib, f))
 
 
@@ -66,8 +67,8 @@ shutil.copyfile(os.path.join(launcher_dir, 'offstagearts-ballettheatre.jar'), os
 sitecode_file = '../oa_jmbt/dist/oa_jmbt.jar'
 shutil.copyfile(sitecode_file, os.path.join(deploy_dir, 'sitecode.jar'))
 
-#if False :
-if True :
+if False :
+#if True :
 	print 'Starting gsync to Google Drive...'
 	local_bin = os.path.expanduser('~/.local/bin')
 #	cmd = [os.path.join(local_bin, 'gsync'), '-r', '--verbose', 'deploy/', 'drive://JMBTOffice/OffstageArts']

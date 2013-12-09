@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package offstage.school.gui;
 
+import citibob.io.RobustOpen;
+import citibob.jschema.SchemaBuf;
 import citibob.task.SqlTask;
 import citibob.reports.Reports;
 import citibob.sql.DbKeyedModel;
@@ -30,12 +32,16 @@ import citibob.sql.RsTasklet2;
 import citibob.sql.SqlRun;
 import citibob.sql.UpdTasklet2;
 import citibob.sql.pgsql.SqlInteger;
+import citibob.swing.WidgetTree;
 import citibob.swing.table.JTypeTableModel;
+import citibob.task.DbTask;
 import citibob.util.Day;
 import citibob.wizard.Wizard;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.sql.ResultSet;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import javax.swing.JOptionPane;
 import net.sf.jasperreports.engine.JRDataSource;
@@ -52,6 +58,7 @@ import offstage.equery.swing.EQueryWizard;
 import offstage.reports.StudentSchedule;
 import offstage.schema.TermidsSchema;
 import offstage.school.tuition.TuitionCalc;
+import org.python.util.PythonInterpreter;
 
 /**
  *
@@ -327,13 +334,6 @@ vTermID.setKeyedModel(vTermID.getKeyedModel(), null);
 			final LateFeesWizard wizard = new LateFeesWizard(fapp, SchoolRegFrame.this);
 			if (!wizard.runWizard("latefees")) return;
 			
-//			int termid = schoolModel.getTermID();
-//			Calendar cal = Calendar.getInstance(fapp.getTimeZone());
-//				cal.set(Calendar.HOUR_OF_DAY, 0);
-//				cal.set(Calendar.MINUTE, 0);
-//				cal.set(Calendar.SECOND, 0);
-//				cal.set(Calendar.MILLISECOND, 0);
-//				cal.add(Calendar.DAY_OF_MONTH, -30);
 System.out.println("asofdate: " + (java.util.Date)wizard.getVal("asofdate"));
 			final SchoolAccounts rep = new SchoolAccounts(fapp, str, fapp.timeZone(), -1,
 				(java.util.Date)wizard.getVal("asofdate"), (Integer)wizard.getVal("latedays"));
@@ -468,13 +468,53 @@ System.out.println("asofdate: " + (java.util.Date)wizard.getVal("asofdate"));
 
 	private void miAccountStatementsActionPerformed(java.awt.event.ActionEvent evt)//GEN-FIRST:event_miAccountStatementsActionPerformed
 	{//GEN-HEADEREND:event_miAccountStatementsActionPerformed
-		fapp.guiRun().run(SchoolRegFrame.this, new SqlTask()
-		{
-			public void run(SqlRun str) throws Exception
-			{
+		fapp.guiRun().run(SchoolRegFrame.this, new DbTask() {
+		public void run(java.sql.Connection dbb) throws Exception {
+			AccountStatementWizard wizard = new AccountStatementWizard(fapp, WidgetTree.getJFrame(SchoolRegFrame.this));
+			if (wizard.runWizard()) {
+				java.util.Date soft_start_dt = (java.util.Date)wizard.getVal("soft_start_dt");
+				java.util.Date hard_start_dt = (java.util.Date)wizard.getVal("hard_start_dt");
+				java.util.Date asof_dt = (java.util.Date)wizard.getVal("asof_dt");
+				java.util.Date end_dt = (java.util.Date)wizard.getVal("end_dt");
+
+				SimpleDateFormat fmt = new SimpleDateFormat("yyyyMMdd");
+				fmt.setTimeZone(fapp.timeZone());
+
 				int termid = schoolModel.getTermID();
-				AcctStatement.doAccountStatementsAndLabels(str, fapp, termid, -1, new java.util.Date());
-			}});
+				PythonInterpreter interp = new PythonInterpreter();
+				try {
+					File statements_txt = File.createTempFile("statements", ".txt", null);
+					statements_txt.deleteOnExit();
+					File labels_txt = File.createTempFile("labels", ".txt", null);
+					labels_txt.deleteOnExit();
+
+					interp.set("conn", dbb);
+					interp.set("termid", termid);
+					interp.set("soft_start_str", soft_start_dt == null ? null : fmt.format(soft_start_dt));
+					interp.set("hard_start_str", hard_start_dt == null ? null : fmt.format(hard_start_dt));
+					interp.set("asof_str", asof_dt == null ? null : fmt.format(asof_dt));
+					interp.set("end_str", end_dt == null ? null : fmt.format(end_dt));
+					interp.set("statements_txt", statements_txt.toString());
+					interp.set("labels_txt", labels_txt.toString());
+					interp.exec("import account_statements");
+					interp.exec("account_statements.run_report_java(conn, termid, soft_start_str, hard_start_str, asof_str, end_str, statements_txt, labels_txt)");
+
+					RobustOpen.open(statements_txt);
+					RobustOpen.open(labels_txt);
+
+				} finally {
+					interp.cleanup();
+				}
+			}
+		}});
+
+//		fapp.guiRun().run(SchoolRegFrame.this, new SqlTask()
+//		{
+//			public void run(SqlRun str) throws Exception
+//			{
+//				int termid = schoolModel.getTermID();
+//				AcctStatement.doAccountStatementsAndLabels(str, fapp, termid, -1, new java.util.Date());
+//			}});
 // TODO add your handling code here:
 	}//GEN-LAST:event_miAccountStatementsActionPerformed
 

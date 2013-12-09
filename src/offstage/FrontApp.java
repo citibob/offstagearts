@@ -384,79 +384,8 @@ throws Exception
 	Config mainConfig = configMaker.newConfig(this);
 	if (mainConfig == null) System.exit(-1);
 	config = new MultiConfig(
-		new PBEConfig(mainConfig, new DialogPBEAuth(null, "Please enter configuration password.", null)),
+		new PBEConfig(mainConfig, new DialogPBEAuth(null, "Please enter configuration password.", "OAPASS")),
 		new ResourceConfig("offstage/defaultconfig"));
-//	// Choose the configuration directory, so we can get the rest of
-//	// the configuration
-//	switch(ctType) {
-//		case CT_CONFIGSET : {
-//			Preferences configPrefs = Preferences.userRoot().node("offstagearts").node("config");
-//			String sdir = configPrefs.get(xconfigName, null);
-//			configURL = new File(sdir).toURL();
-//			configName = xconfigName;
-//		} break;
-//		case CT_CONFIGCHOOSE : {
-//			Preferences configPrefs = Preferences.userRoot().node("offstagearts").node("config");
-//			ConfigDialog dialog = new ConfigDialog(configPrefs,
-//				new JavaSwingerMap(TimeZone.getDefault()), swingPrefs, guiRoot(), version.toString());
-//			dialog.setVisible(true);
-//			if (dialog.isDemo()) {
-//				configURL = null;
-//				configName = "Demo";
-//			} else {
-//				configURL = dialog.getConfigFile().toURL();
-//				configName = dialog.getConfigName();
-//			}
-//		} break;
-//		case CT_DEMO : {
-//			configURL = null;
-//			configResourceFolder = "offstage/demo/";
-////			configURL = getClass().getClassLoader().getResource("offstage/demo/");
-//			configName = "Demo";
-//		} break;
-//		case CT_OALAUNCH : {
-//			configURL = null;
-//			configResourceFolder = "oalaunch/config/";
-////			configURL = getClass().getClassLoader().getResource("oalaunch/config/");
-//			
-//
-//////List<JarURL> jurls = ClassPathUtils.getClassPath();
-//////for (JarURL jurl : jurls) System.out.println(jurl.getUrl());
-////System.out.println(getClass());
-////System.out.println(getClass().getClassLoader());
-////System.out.println(getClass().getClassLoader().getResource("oalaunch/config/app.properties"));
-////System.out.println(getClass().getClassLoader().getResource("oalaunch/config/"));
-////
-////System.out.println("in1 = " + getClass().getClassLoader().getResource("oalaunch/config/app.properties").openStream());
-////System.out.println("in2 = " + getConfigResource("app.properties").openStream());
-//
-//			// Load up our OALaunch configuration properties
-//			Properties oalaunch = new Properties();
-//			ClassLoader clr = getClass().getClassLoader();
-//			URL url = clr.getResource("oalaunch/oalaunch.properties");
-//			InputStream in = url.openStream();
-//			oalaunch.load(in);
-//			in.close();
-////Thread.currentThread().sleep(20000*1000L);
-//
-//			configName = oalaunch.getProperty("config.name", "OALaunch");
-//if (configName == null) configName = "<null>";
-//if ("".equals(configName)) configName = "<blank>";
-//			
-//			// Strip off slashes and stuff
-//			int slash = configName.lastIndexOf('/');
-//			if (slash >= 0) configName = configName.substring(slash+1);
-//			slash = configName.lastIndexOf('\\');
-//			if (slash >= 0) configName = configName.substring(slash+1);
-//			slash = configName.lastIndexOf(".jar");
-//			if (slash >= 0) configName = configName.substring(0, slash);
-//			
-//			
-//		} break;
-//	}
-
-	//	if (configDir == null) System.exit(0);
-//configURL = getClass().getClassLoader().getResource("offstage/config/");
 	
 	// Load up properties from the configuration
 //	passwordDialog = new PasswordDialog(null);
